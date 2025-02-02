@@ -1,0 +1,20 @@
+.upload-container {
+    position: sticky;
+    top: 0;
+    width: min(100%, 400px);
+}
+
+.ant-upload.ant-upload-drag {
+    height: unset;
+}
+
+.ant-upload-list {
+    max-height: 50vh;
+    padding-right: 8px;
+    transition: .1s;
+    overflow: auto;
+}
+
+.ant-upload-list:has(:first-child) {
+    margin: 10px 0;
+}

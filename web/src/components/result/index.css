@@ -1,0 +1,16 @@
+.result-container {
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+}
+
+.result {
+    padding-block: 16px;
+    flex: 1;
+}
+
+.card-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+}

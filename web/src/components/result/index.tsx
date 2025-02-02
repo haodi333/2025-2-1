@@ -72,8 +72,8 @@ const Result = () => {
     return (
         <div className='result-container'>
             <Flex gap={12} style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-                <Col flex={1}><Search placeholder="input search file" onSearch={onSearch} enterButton /></Col>
-                <Col><Button disabled={!urls.length} onClick={downloadFiles} type="primary" icon={<DownloadOutlined></DownloadOutlined>}>Download All</Button></Col>
+                <Col flex={1}><Search placeholder="输入查询文件名或文件描述" onSearch={onSearch} enterButton /></Col>
+                <Col><Button disabled={!urls.length} onClick={downloadFiles} type="primary" icon={<DownloadOutlined></DownloadOutlined>}>全部下载</Button></Col>
             </Flex>
             <div className='result'>
                 <div className="card-list">

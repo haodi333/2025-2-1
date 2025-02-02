@@ -28,7 +28,7 @@ const UploadComponent: React.FC = () => {
         });
         upload(formData).then((res) => {
             setFileList([]);
-            message.success('upload successfully.');
+            message.success('上传成功');
             parseZip(res).then(files => {
                 const urlList = files.map(file => URL.createObjectURL(file));
                 dispatch(setUrlList(urlList));
@@ -41,8 +41,8 @@ const UploadComponent: React.FC = () => {
                     }))));
                 })
             })
-        }).catch(() => {
-            message.error('upload failed.');
+        }).catch((err) => {
+            message.error(`上传失败：${err.message}`);
         }).finally(() => {
             setIsUploading(false);
         });
@@ -61,7 +61,7 @@ const UploadComponent: React.FC = () => {
             flushSync(() => setFileList([...fileList, file]));
             return false;
         }
-        message.error(`${file.name} is not a supported file`);
+        message.error(`${file.name} 不是一个支持的文件类型`);
         return false;
     };
 
@@ -82,7 +82,7 @@ const UploadComponent: React.FC = () => {
                 <p className="ant-upload-drag-icon">
                     <InboxOutlined />
                 </p>
-                <p className="ant-upload-text">Click or drag csv/zip file to this area to upload</p>
+                <p className="ant-upload-text">点击或拖拽 csv/zip 文件到此处上传</p>
             </Dragger>
             <Button
                 type="primary"
@@ -91,7 +91,7 @@ const UploadComponent: React.FC = () => {
                 loading={isUploading}
                 style={{ marginTop: 16, width: '100%' }}
             >
-                {isUploading ? 'Uploading' : 'Upload'}
+                {isUploading ? '上传中' : '上传'}
             </Button>
         </div>
     );

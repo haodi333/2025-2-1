@@ -77,7 +77,11 @@ def upload_files():
         return jsonify({"error": "No file part"}), 400
 
     files = request.files.getlist("files")  # Allows multiple file uploads
-
+    try:
+        target_min = float(request.form.get("target_min"))  # 从表单中获取 target_min
+        target_max = float(request.form.get("target_max"))  # 从表单中获取 target_max
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid target_min or target_max value"}), 400
     if not files:
         return jsonify({"error": "No selected files"}), 400
 
@@ -85,7 +89,7 @@ def upload_files():
 
     # Process each file
     for file in files:
-        df = cubic_spline_interpolation(file)  # Assuming this function processes the file and returns a DataFrame
+        df = cubic_spline_interpolation(file, target_min, target_max)  # Assuming this function processes the file and returns a DataFrame
         dfs.append((file, df))  # Store both the file object and the resulting DataFrame
 
     # Create a ZIP file in memory

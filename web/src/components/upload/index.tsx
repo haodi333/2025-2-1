@@ -17,6 +17,7 @@ const UploadComponent: React.FC = () => {
 	const [isUploading, setIsUploading] = useState(false);
 	const [targetMin, setTargetMin] = useState<number | null>(null);
 	const [targetMax, setTargetMax] = useState<number | null>(null);
+	const [wavelengthInterval, setWavelengthInterval] = useState<number | null>(null);
 	const dispatch = useAppDispatch();
 
 	const handleUpload = async () => {
@@ -27,7 +28,7 @@ const UploadComponent: React.FC = () => {
 		fileList.forEach((file) => {
 			formData.append("files", file);
 		});
-		upload(formData, targetMin, targetMax)
+		upload(formData, targetMin, targetMax, wavelengthInterval)
 			.then((res) => {
 				setFileList([]);
 				message.success("上传成功");
@@ -91,6 +92,18 @@ const UploadComponent: React.FC = () => {
 				</p>
 				<p className="ant-upload-text">点击或拖拽 csv/zip 文件到此处上传</p>
 			</Dragger>
+			<Flex
+				justify="center"
+				align="center"
+				style={{ marginTop: 16 }}
+			>
+				<InputNumber
+					style={{ width: "100%" }}
+					value={wavelengthInterval}
+					onChange={(value) => setWavelengthInterval(value)}
+					addonBefore="波长间隔"
+				/>
+			</Flex>
 			<Flex
 				justify="center"
 				align="center"

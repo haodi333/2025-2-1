@@ -10,44 +10,62 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# def cubic_spline_interpolation(file, target_min, target_max):
+# def cubic_spline_interpolation(file, target_min=3600, target_max=12488):
+#     # 读取数据
 #     df = pd.read_csv(file, header=None)
-#     m = list(df[0])
-#     m = np.array(m)
-#     # m1 = 1e7 / m
-
+#     m = df[0].values  # 获取第一列数据
+#     df = df.sort_values(by=0).reset_index(drop=True)
+#     # 对第一列数据进行三次样条插值
 #     spline = CubicSpline(np.arange(len(m)), m)
 #     interpolated_m1 = spline(np.arange(len(m)))
+
+#     # 归一化并缩放到目标范围
 #     normalized_interpolated_m1 = (interpolated_m1 - np.min(interpolated_m1)) / (np.max(interpolated_m1) - np.min(interpolated_m1))
 #     rescaled_interpolated_m1 = normalized_interpolated_m1 * (target_max - target_min) + target_min
 
-#     # line1 = ["工作组", "样品编号", "光谱序号", "波长"]
-#     # line1 = line1 + list(rescaled_interpolated_m1)
-#     # line2 = line2 + list(df[1])
-#     # df_new = pd.DataFrame([line1, line2])
-#     # return df_new
+#     # 将第二列数据与插值后的第一列数据组合成新的 DataFrame
+#     df_new = pd.DataFrame({
+#         '波数': list(rescaled_interpolated_m1),  # 将 NumPy 数组转换为列表
+#         '吸光度': list(df[1].values)  # 将第二列数据转换为列表
+#     })
 
-def cubic_spline_interpolation(file, target_min, target_max):
+#     df_new = df_new.sort_values(by='波数').reset_index(drop=True)
+
+#     return df_new
+
+def cubic_spline_interpolation(file, target_min=3600, target_max=12488, target_interval=8):
+    """
+    对光谱文件进行三次样条插值，重新采样到目标波长范围和间隔。
+    :param file: 上传的文件对象
+    :param target_min: 目标波长范围的最小值
+    :param target_max: 目标波长范围的最大值
+    :param target_interval: 目标波长间隔
+    :return: 重新采样后的 DataFrame
+    """
     # 读取数据
     df = pd.read_csv(file, header=None)
-    m = df[0].values  # 获取第一列数据
     df = df.sort_values(by=0).reset_index(drop=True)
-    # 对第一列数据进行三次样条插值
-    spline = CubicSpline(np.arange(len(m)), m)
-    interpolated_m1 = spline(np.arange(len(m)))
+    
+    wavelength = df[0].values  # 原始波长数据
+    intensity = df[1].values  # 原始吸光度数据
 
-    # 归一化并缩放到目标范围
-    normalized_interpolated_m1 = (interpolated_m1 - np.min(interpolated_m1)) / (np.max(interpolated_m1) - np.min(interpolated_m1))
-    rescaled_interpolated_m1 = normalized_interpolated_m1 * (target_max - target_min) + target_min
+    # 对原始数据进行三次样条插值
+    spline = CubicSpline(wavelength, intensity)
 
-    # 将第二列数据与插值后的第一列数据组合成新的 DataFrame
+    # 生成目标波长点
+    target_wavelengths = np.arange(target_min, target_max - target_interval, -target_interval)
+
+    # 在目标波长点上重新采样
+    resampled_intensity = spline(target_wavelengths)
+
+    # 将结果保存为 DataFrame
     df_new = pd.DataFrame({
-        '波数': list(rescaled_interpolated_m1),  # 将 NumPy 数组转换为列表
-        '吸光度': list(df[1].values)  # 将第二列数据转换为列表
+        '波数': target_wavelengths,
+        '吸光度': resampled_intensity
     })
-
+    
     df_new = df_new.sort_values(by='波数').reset_index(drop=True)
-
+    
     return df_new
 
 def cubic_spline_interpolation1(file):
@@ -80,6 +98,7 @@ def upload_files():
     try:
         target_min = float(request.form.get("target_min"))  # 从表单中获取 target_min
         target_max = float(request.form.get("target_max"))  # 从表单中获取 target_max
+        target_interval = float(request.form.get("target_interval"))  # 从表单中获取 target_max
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid target_min or target_max value"}), 400
     if not files:
@@ -89,7 +108,7 @@ def upload_files():
 
     # Process each file
     for file in files:
-        df = cubic_spline_interpolation(file, target_min, target_max)  # Assuming this function processes the file and returns a DataFrame
+        df = cubic_spline_interpolation(file, target_min, target_max, target_interval)  # Assuming this function processes the file and returns a DataFrame
         dfs.append((file, df))  # Store both the file object and the resulting DataFrame
 
     # Create a ZIP file in memory
@@ -109,6 +128,6 @@ def upload_files():
     return send_file(zip_buffer, as_attachment=True, download_name="interpolated_files.zip", mimetype="application/zip")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
-    # path = r'C:\Users\new\Documents\WeChat Files\wxid_pb2qbwkdckgj22\FileStorage\File\2025-03\12488.csv'
-    # df = cubic_spline_interpolation(path, 12488,3600)
+    # app.run(host="0.0.0.0")
+    path = r'C:\Users\new\Documents\WeChat Files\wxid_pb2qbwkdckgj22\FileStorage\File\2025-03\12488.csv'
+    df = cubic_spline_interpolation(path, 12488, 3600, 8)

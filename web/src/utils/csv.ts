@@ -7,16 +7,17 @@ export function parseCsv(file: File): Promise<Record<string, ColumnType[]>> {
     return new Promise((resolve, reject) => {
         Papa.parse<Record<string, ColumnType>>(file, {
             dynamicTyping: true,
+            header: true,
             complete: (result) => {
                 const state: Record<string, ColumnType[]> = {};
                 result.data.forEach(row => {
-                    const kvs = Object.entries(row)
+                    const kvs = Object.entries(row);
                     if (kvs.some(([, value]) => !value)) return;
                     for (const [key, value] of kvs) {
                         if (!state[key]) {
                             state[key] = [];
                         }
-                        state[key].unshift(value);
+                        state[key].push(value);
                     }
                 });
                 resolve(state);

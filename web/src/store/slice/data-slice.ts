@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ColumnType } from "../../utils/csv";
 
 interface Data {
   name: string;
   url: string;
   description?: string;
-  data: [number[], number[]];
+  data: Record<string, ColumnType[]>;
 }
 
 interface DataState {

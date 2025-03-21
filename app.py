@@ -10,8 +10,47 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
+# def cubic_spline_interpolation(file, target_min, target_max):
+#     df = pd.read_csv(file, header=None)
+#     m = list(df[0])
+#     m = np.array(m)
+#     # m1 = 1e7 / m
 
-def cubic_spline_interpolation(file):
+#     spline = CubicSpline(np.arange(len(m)), m)
+#     interpolated_m1 = spline(np.arange(len(m)))
+#     normalized_interpolated_m1 = (interpolated_m1 - np.min(interpolated_m1)) / (np.max(interpolated_m1) - np.min(interpolated_m1))
+#     rescaled_interpolated_m1 = normalized_interpolated_m1 * (target_max - target_min) + target_min
+
+#     # line1 = ["工作组", "样品编号", "光谱序号", "波长"]
+#     # line1 = line1 + list(rescaled_interpolated_m1)
+#     # line2 = line2 + list(df[1])
+#     # df_new = pd.DataFrame([line1, line2])
+#     # return df_new
+
+def cubic_spline_interpolation(file, target_min, target_max):
+    # 读取数据
+    df = pd.read_csv(file, header=None)
+    m = df[0].values  # 获取第一列数据
+    df = df.sort_values(by=0).reset_index(drop=True)
+    # 对第一列数据进行三次样条插值
+    spline = CubicSpline(np.arange(len(m)), m)
+    interpolated_m1 = spline(np.arange(len(m)))
+
+    # 归一化并缩放到目标范围
+    normalized_interpolated_m1 = (interpolated_m1 - np.min(interpolated_m1)) / (np.max(interpolated_m1) - np.min(interpolated_m1))
+    rescaled_interpolated_m1 = normalized_interpolated_m1 * (target_max - target_min) + target_min
+
+    # 将第二列数据与插值后的第一列数据组合成新的 DataFrame
+    df_new = pd.DataFrame({
+        '波数': list(rescaled_interpolated_m1),  # 将 NumPy 数组转换为列表
+        '吸光度': list(df[1].values)  # 将第二列数据转换为列表
+    })
+
+    df_new = df_new.sort_values(by='波数').reset_index(drop=True)
+
+    return df_new
+
+def cubic_spline_interpolation1(file):
     df = pd.read_csv(file, header=None)
     m = list(df[0])
     m = np.array(m)
@@ -44,22 +83,28 @@ def upload_files():
 
     dfs = []
 
+    # Process each file
     for file in files:
-        df = cubic_spline_interpolation(file)
-        dfs.append(df)
+        df = cubic_spline_interpolation(file)  # Assuming this function processes the file and returns a DataFrame
+        dfs.append((file, df))  # Store both the file object and the resulting DataFrame
 
+    # Create a ZIP file in memory
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for idx, df in enumerate(dfs):
+        for file, df in dfs:
+            # Use the original filename (without extension) for the CSV name
+            filename_without_extension = os.path.splitext(file.filename)[0]
             csv_buffer = BytesIO()
             df.to_csv(csv_buffer, index=False)
             csv_buffer.seek(0)
-            zip_file.writestr(f"file_{idx+1}.csv", csv_buffer.read())
+            zip_file.writestr(f"{filename_without_extension}.csv", csv_buffer.read())
 
     zip_buffer.seek(0)
 
+    # Send the zip file as a response
     return send_file(zip_buffer, as_attachment=True, download_name="interpolated_files.zip", mimetype="application/zip")
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
+    # path = r'C:\Users\new\Documents\WeChat Files\wxid_pb2qbwkdckgj22\FileStorage\File\2025-03\12488.csv'
+    # df = cubic_spline_interpolation(path, 12488,3600)
